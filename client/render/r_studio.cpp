@@ -646,7 +646,7 @@ void CStudioModelRenderer :: UploadBufferBase( vbomesh_t *pOut, svert_t *arrayxv
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, stcoord ));
+	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_SHORT, GL_TRUE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, stcoord ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, normal ));
@@ -679,7 +679,7 @@ void CStudioModelRenderer :: UploadBufferVLight( vbomesh_t *pOut, svert_t *array
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, stcoord ));
+	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_SHORT, GL_TRUE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, stcoord ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, normal ));
@@ -716,7 +716,7 @@ void CStudioModelRenderer :: UploadBufferWeight( vbomesh_t *pOut, svert_t *array
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, stcoord ));
+	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_SHORT, GL_TRUE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, stcoord ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, normal ));
@@ -762,7 +762,7 @@ void CStudioModelRenderer :: UploadBufferGeneric( vbomesh_t *pOut, svert_t *arra
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, stcoord ));
+	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_SHORT, GL_TRUE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, stcoord ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, normal ));
@@ -814,6 +814,19 @@ void CStudioModelRenderer :: MeshCreateBuffer( vbomesh_t *pOut, const mstudiomes
 	// init temporare arrays
 	m_nNumArrayVerts = m_nNumArrayElems = 0;
 
+	// setup worldtransform array
+	if( m_pRenderModel->poseToBone != NULL )
+	{
+		for( int i = 0; i < m_pStudioHeader->numbones; i++ )
+			m_pworldtransform[i] = bones[i].ConcatTransforms( m_pRenderModel->poseToBone->posetobone[i] );
+	}
+	else
+	{
+		// no pose to bone just copy the bones
+		for( int i = 0; i < m_pStudioHeader->numbones; i++ )
+			m_pworldtransform[i] = bones[i];
+	}
+
 	// first create trifan array from studiomodel mesh
 	while( (i = *( ptricmds++ )) )
 	{
@@ -855,7 +868,12 @@ void CStudioModelRenderer :: MeshCreateBuffer( vbomesh_t *pOut, const mstudiomes
 			}
 
 			// don't concat by matrix here - it's should be done on GPU
-			arrayxvert[m_nNumArrayVerts].vertex = pstudioverts[ptricmds[0]];
+			//arrayxvert[m_nNumArrayVerts].vertex = pstudioverts[ptricmds[0]];
+			//Matrix3x4_VectorTransform( g_studio.bonestransform[pvertbone[i]], pstudioverts[ptricmds[0]], g_studio.verts[i] );
+			//byte *pvertbone = ((byte *)m_pStudioHeader + m_pSubModel->vertinfoindex);
+
+			// compute unweighted vertex
+			arrayxvert[m_nNumArrayVerts].vertex = m_pworldtransform[pvertbone[ptricmds[0]]].VectorTransform( pstudioverts[ptricmds[0]] );
 			arrayxvert[m_nNumArrayVerts].normal = pstudionorms[ptricmds[1]];
 
 			if( dml != NULL && dml->numverts > 0 )
@@ -874,18 +892,18 @@ void CStudioModelRenderer :: MeshCreateBuffer( vbomesh_t *pOut, const mstudiomes
 			if( FBitSet( ptexture->flags, STUDIO_NF_CHROME ))
 			{
 				// probably always equal 64 (see studiomdl.c for details)
-				arrayxvert[m_nNumArrayVerts].stcoord[0] = FloatToHalf( s );
-				arrayxvert[m_nNumArrayVerts].stcoord[1] = FloatToHalf( t );
+				arrayxvert[m_nNumArrayVerts].stcoord[0] = s * 32767;//FloatToHalf( s );
+				arrayxvert[m_nNumArrayVerts].stcoord[1] = t * 32767; //FloatToHalf( t );
 			}
 			else if( FBitSet( ptexture->flags, STUDIO_NF_UV_COORDS ))
 			{
-				arrayxvert[m_nNumArrayVerts].stcoord[0] = ptricmds[2];
-				arrayxvert[m_nNumArrayVerts].stcoord[1] = ptricmds[3];
+				arrayxvert[m_nNumArrayVerts].stcoord[0] = ptricmds[2] * 32767;
+				arrayxvert[m_nNumArrayVerts].stcoord[1] = ptricmds[3] * 32767;
 			}
 			else
 			{
-				arrayxvert[m_nNumArrayVerts].stcoord[0] = FloatToHalf( ptricmds[2] * s );
-				arrayxvert[m_nNumArrayVerts].stcoord[1] = FloatToHalf( ptricmds[3] * t );
+				arrayxvert[m_nNumArrayVerts].stcoord[0] = ptricmds[2] * s * 32767; //FloatToHalf( ptricmds[2] * s );
+				arrayxvert[m_nNumArrayVerts].stcoord[1] = ptricmds[3] * t * 32767; //FloatToHalf( ptricmds[3] * t );
 			}
 
 			if( m_pRenderModel->poseToBone != NULL )
@@ -953,7 +971,7 @@ void CStudioModelRenderer :: MeshCreateBuffer( vbomesh_t *pOut, const mstudiomes
 	// create index array buffer
 	pglGenBuffersARB( 1, &pOut->ibo );
 	pglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, pOut->ibo );
-	pglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, m_nNumArrayElems * sizeof( unsigned int ), &m_arrayelems[0], GL_STATIC_DRAW_ARB );
+	pglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, m_nNumArrayElems * sizeof( unsigned short ), &m_arrayelems[0], GL_STATIC_DRAW_ARB );
 
 	// don't forget to unbind them
 	pglBindVertexArray( GL_FALSE );
@@ -3970,8 +3988,8 @@ void CStudioModelRenderer :: DrawMeshFromBuffer( const vbomesh_t *mesh )
 	pglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ibo );
 
 	if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
-		pglDrawRangeElementsEXT( GL_TRIANGLES, 0, mesh->numVerts - 1, mesh->numElems, GL_UNSIGNED_INT, 0 );
-	else pglDrawElements( GL_TRIANGLES, mesh->numElems, GL_UNSIGNED_INT, 0 );
+		pglDrawRangeElementsEXT( GL_TRIANGLES, 0, mesh->numVerts - 1, mesh->numElems, GL_UNSIGNED_SHORT, 0 );
+	else pglDrawElements( GL_TRIANGLES, mesh->numElems, GL_UNSIGNED_SHORT, 0 );
 
 	r_stats.c_total_tris += (mesh->numElems / 3);
 	r_stats.num_flushes++;
@@ -4106,13 +4124,13 @@ void CStudioModelRenderer :: DrawLightForMeshList( plight_t *pl )
 			// update bones array
 			if( m_pRenderModel == IEngineStudio.GetModelByIndex( m_pCurrentEntity->curstate.weaponmodel ))
 			{
-				pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_weaponquat[0][0] );
-				pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_weaponpos[0][0] );
+				//pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_weaponquat[0][0] );
+				//pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_weaponpos[0][0] );
 			}
 			else
 			{
-				pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_studioquat[0][0] );
-				pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_studiopos[0][0] );
+				//pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_studioquat[0][0] );
+				//pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_studiopos[0][0] );
 			}
 
 			cached_model = m_pRenderModel;
@@ -4265,13 +4283,13 @@ void CStudioModelRenderer :: DrawStudioMeshes( void )
 
 			if( m_pRenderModel == IEngineStudio.GetModelByIndex( m_pCurrentEntity->curstate.weaponmodel ))
 			{
-				pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_weaponquat[0][0] );
-				pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_weaponpos[0][0] );
+				//pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_weaponquat[0][0] );
+				//pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_weaponpos[0][0] );
 			}
 			else
 			{
-				pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_studioquat[0][0] );
-				pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_studiopos[0][0] );
+				//pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_studioquat[0][0] );
+				//pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_studiopos[0][0] );
 			}
 
 			if( FBitSet( m_pModelInstance->info_flags, MF_VERTEX_LIGHTING ))
@@ -4409,13 +4427,13 @@ void CStudioModelRenderer :: DrawStudioMeshesShadow( void )
 
 			if( m_pRenderModel == IEngineStudio.GetModelByIndex( m_pCurrentEntity->curstate.weaponmodel ))
 			{
-				pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_weaponquat[0][0] );
-				pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_weaponpos[0][0] );
+				//pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_weaponquat[0][0] );
+				//pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_weaponpos[0][0] );
 			}
 			else
 			{
-				pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_studioquat[0][0] );
-				pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_studiopos[0][0] );
+				//pglUniform4fvARB( RI->currentshader->u_BoneQuaternion, num_bones, &m_pModelInstance->m_studioquat[0][0] );
+				//pglUniform3fvARB( RI->currentshader->u_BonePosition, num_bones, &m_pModelInstance->m_studiopos[0][0] );
 			}
 			cached_model = m_pRenderModel;
 		}

@@ -210,7 +210,7 @@ void R_CreateSurfaceVBO( grass_t *out )
 
 	pglBindBufferARB( GL_ARRAY_BUFFER_ARB, out->vbo.vbo );
 	pglBufferDataARB( GL_ARRAY_BUFFER_ARB, m_iNumVertex * sizeof( gvert_t ), &m_arraygvert[0], GL_STATIC_DRAW_ARB );
-#ifdef GRASS_PACKED_VERTEX
+#if 0 //def GRASS_PACKED_VERTEX
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 4, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( gvert_t ), (void *)offsetof( gvert_t, center ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 

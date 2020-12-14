@@ -26,10 +26,10 @@ attribute vec4		attr_BoneWeights;
 #if defined (STUDIO_VERTEX_LIGHTING)
 attribute vec4		attr_LightColor;
 #endif
-
+#if 0
 uniform vec4		u_BoneQuaternion[MAXSTUDIOBONES];
 uniform vec3		u_BonePosition[MAXSTUDIOBONES];
-
+#endif
 #if defined (STUDIO_VERTEX_LIGHTING)
 uniform vec4		u_GammaTable[64];
 uniform vec4		u_LightStyles;
@@ -49,6 +49,7 @@ varying vec2		var_TexDiffuse;
 void main( void )
 {
 	vec4 position = vec4( attr_Position, 1.0 );
+#if 0
 #if defined( STUDIO_BONEWEIGHTING )
 	int boneIndex0 = int( attr_BoneIndexes[0] );
 	int boneIndex1 = int( attr_BoneIndexes[1] );
@@ -73,14 +74,15 @@ void main( void )
 	// compute hardware skinning without boneweighting
 	mat4 boneMatrix = Mat4FromOriginQuat( u_BoneQuaternion[boneIndex0], u_BonePosition[boneIndex0] );
 #endif
-	vec4 worldpos = boneMatrix * position;
-	vec3 N = (boneMatrix * vec4( attr_Normal, 0.0 )).xyz;
+#endif
+	vec4 worldpos = position;
+	vec3 N = attr_Normal;
 
 	// transform vertex position into homogenous clip-space
 	gl_Position = gl_ModelViewProjectionMatrix * worldpos;
-	gl_ClipVertex = gl_ModelViewMatrix * worldpos;
+//	gl_ClipVertex = gl_ModelViewMatrix * worldpos;
 
-#if defined( STUDIO_FULLBRIGHT )
+#if  1 //defined( STUDIO_FULLBRIGHT )
 	var_VertexLight = vec3( 1.0 );	// just get fullbright
 #elif defined (STUDIO_VERTEX_LIGHTING)
 	vec3 lightmap = vec3( 0.0 );
@@ -110,7 +112,7 @@ void main( void )
 #else
 	float	illum = u_LightAmbient;
 
-#if defined( STUDIO_LIGHT_FLATSHADE )
+#if 1 // defined( STUDIO_LIGHT_FLATSHADE )
 	illum += u_LightShade * 0.8;
 #else
 	vec3	L = normalize( u_LightDir );

@@ -594,7 +594,7 @@ private:
 	Vector			m_arrayverts[MAXARRAYVERTS];
 	Vector4D			m_arraycoord[MAXARRAYVERTS];
 	byte			m_arraycolor[MAXARRAYVERTS][4];
-	unsigned int		m_arrayelems[MAXARRAYVERTS*6];
+	unsigned short		m_arrayelems[MAXARRAYVERTS*6];
 	int			m_nNumArrayVerts;
 	int			m_nNumArrayElems;
 	int			m_nNumLightVerts;

@@ -785,8 +785,8 @@ static void GL_InitSolidStudioUniforms( glsl_program_t *shader )
 	ASSERT( shader != NULL );
 
 	shader->u_ColorMap = pglGetUniformLocationARB( shader->handle, "u_ColorMap" );
-	shader->u_BoneQuaternion = pglGetUniformLocationARB( shader->handle, "u_BoneQuaternion" );
-	shader->u_BonePosition = pglGetUniformLocationARB( shader->handle, "u_BonePosition" );
+	//shader->u_BoneQuaternion = pglGetUniformLocationARB( shader->handle, "u_BoneQuaternion" );
+	//shader->u_BonePosition = pglGetUniformLocationARB( shader->handle, "u_BonePosition" );
 
 	if( GL_FindShaderDirective( shader, "STUDIO_VERTEX_LIGHTING" ))
 	{
@@ -821,8 +821,8 @@ static void GL_InitStudioDlightUniforms( glsl_program_t *shader )
 	shader->u_ColorMap = pglGetUniformLocationARB( shader->handle, "u_ColorMap" );
 	shader->u_ProjectMap = pglGetUniformLocationARB( shader->handle, "u_ProjectMap" );
 	shader->u_ShadowMap = pglGetUniformLocationARB( shader->handle, "u_ShadowMap" );
-	shader->u_BoneQuaternion = pglGetUniformLocationARB( shader->handle, "u_BoneQuaternion" );
-	shader->u_BonePosition = pglGetUniformLocationARB( shader->handle, "u_BonePosition" );
+	//shader->u_BoneQuaternion = pglGetUniformLocationARB( shader->handle, "u_BoneQuaternion" );
+	//shader->u_BonePosition = pglGetUniformLocationARB( shader->handle, "u_BonePosition" );
 
 	shader->u_LightDir = pglGetUniformLocationARB( shader->handle, "u_LightDir" );
 	shader->u_LightDiffuse = pglGetUniformLocationARB( shader->handle, "u_LightDiffuse" );
@@ -849,8 +849,8 @@ static void GL_InitStudioDepthFillUniforms( glsl_program_t *shader )
 
 	shader->u_ColorMap = pglGetUniformLocationARB( shader->handle, "u_ColorMap" );
 
-	shader->u_BoneQuaternion = pglGetUniformLocationARB( shader->handle, "u_BoneQuaternion" );
-	shader->u_BonePosition = pglGetUniformLocationARB( shader->handle, "u_BonePosition" );
+	//shader->u_BoneQuaternion = pglGetUniformLocationARB( shader->handle, "u_BoneQuaternion" );
+	//shader->u_BonePosition = pglGetUniformLocationARB( shader->handle, "u_BonePosition" );
 
 	GL_BindShader( shader );
 	pglUniform1iARB( shader->u_ColorMap, GL_TEXTURE0 );
