@@ -521,6 +521,38 @@ private:
 	virtual void UpdateInstanceMaterials( void );
 	virtual void ClearInstanceData( bool create );
 
+	template <class T> inline void MeshMakeIndex( T arrayelems[], int &vertexState, bool strip )
+	{
+		if( vertexState++ < 3 )
+		{
+			arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
+		}
+		else if( strip )
+		{
+			// flip triangles between clockwise and counter clockwise
+			if( vertexState & 1 )
+			{
+				// draw triangle [n-2 n-1 n]
+				arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 2;
+				arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
+				arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
+			}
+			else
+			{
+				// draw triangle [n-1 n-2 n]
+				arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
+				arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 2;
+				arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
+			}
+		}
+		else
+		{
+			// draw triangle fan [0 n-1 n]
+			arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - ( vertexState - 1 );
+			arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
+			arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
+		}
+	}
 	void MeshCreateBuffer( vbomesh_t *pDst, const mstudiomesh_t *pSrc, const mstudiomodel_t *pSubModel, const matrix3x4 bones[], dmodellight_t *dml = NULL );
 	void UploadBufferBase( vbomesh_t *pOut, svert_t *arrayxvert );
 	void UploadBufferVLight( vbomesh_t *pOut, svert_t *arrayxvert );
@@ -542,6 +574,8 @@ private:
 	cvar_t			*m_pCvarCompatible;
 	cvar_t			*m_pCvarLodScale;
 	cvar_t			*m_pCvarLodBias;
+	cvar_t			*m_pCvarUInt;
+
 
 	CBaseBoneSetup		m_boneSetup;
 
@@ -594,7 +628,9 @@ private:
 	Vector			m_arrayverts[MAXARRAYVERTS];
 	Vector4D			m_arraycoord[MAXARRAYVERTS];
 	byte			m_arraycolor[MAXARRAYVERTS][4];
-	unsigned int		m_arrayelems[MAXARRAYVERTS*6];
+	unsigned short		m_arrayelems_s[MAXARRAYVERTS*6];
+	unsigned int		m_arrayelems_i[MAXARRAYVERTS*6];
+
 	int			m_nNumArrayVerts;
 	int			m_nNumArrayElems;
 	int			m_nNumLightVerts;

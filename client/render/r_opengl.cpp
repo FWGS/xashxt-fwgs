@@ -493,6 +493,8 @@ static void GL_InitExtensions( void )
 	else glConfig.hardware_type = GLHW_GENERIC;
 
 	GL_CheckExtension( "glDrawRangeElements", drawrangeelementsfuncs, "gl_drawrangeelments", R_DRAW_RANGEELEMENTS_EXT );
+	//GL_CheckExtension( "vertex_half_float", NULL, "gl_vertexhalffloat", R_VERTEX_HALF_FLOAT );
+	GL_SetExtension( R_VERTEX_HALF_FLOAT, 0 );
 
 	if( !GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
 		GL_CheckExtension( "GL_EXT_draw_range_elements", drawrangeelementsextfuncs, "gl_drawrangeelments", R_DRAW_RANGEELEMENTS_EXT );

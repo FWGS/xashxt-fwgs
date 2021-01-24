@@ -1448,7 +1448,7 @@ void R_ProcessWorldData( model_t *mod, qboolean create, const byte *buffer )
 
 =============================================================================
 */
-static unsigned int tempElems[MAX_MAP_ELEMS];
+static unsigned short tempElems[MAX_MAP_ELEMS];
 static unsigned int numTempElems;
 
 // accumulate the indices
@@ -1652,7 +1652,7 @@ void R_DrawLightForSurfList( plight_t *pl )
 		{
 			if( numTempElems )
 			{
-				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 				r_stats.c_total_tris += (numTempElems / 3);
 				r_stats.num_flushes++;
 				startv = MAX_MAP_ELEMS;
@@ -1765,7 +1765,7 @@ void R_DrawLightForSurfList( plight_t *pl )
 
 	if( numTempElems )
 	{
-		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 		r_stats.c_total_tris += (numTempElems / 3);
 		r_stats.num_flushes++;
 		startv = MAX_MAP_ELEMS;
@@ -1881,7 +1881,7 @@ void R_DrawShadowBrushList( void )
 		{
 			if( numTempElems )
 			{
-				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 				r_stats.c_total_tris += (numTempElems / 3);
 				r_stats.num_flushes++;
 				startv = MAX_MAP_ELEMS;
@@ -1937,7 +1937,7 @@ void R_DrawShadowBrushList( void )
 
 	if( numTempElems )
 	{
-		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 		r_stats.c_total_tris += (numTempElems / 3);
 		r_stats.num_flushes++;
 		startv = MAX_MAP_ELEMS;
@@ -2012,7 +2012,7 @@ void R_DrawBrushList( void )
 		{
 			if( numTempElems )
 			{
-				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 				r_stats.c_total_tris += (numTempElems / 3);
 				r_stats.num_flushes++;
 				startv = MAX_MAP_ELEMS;
@@ -2152,7 +2152,7 @@ void R_DrawBrushList( void )
 
 	if( numTempElems )
 	{
-		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 		r_stats.c_total_tris += (numTempElems / 3);
 		r_stats.num_flushes++;
 		numTempElems = 0;
@@ -2259,7 +2259,7 @@ void R_DrawWorldList( void )
 		{
 			if( numTempElems )
 			{
-				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+				pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 				r_stats.c_total_tris += (numTempElems / 3);
 				r_stats.num_flushes++;
 				startv = MAX_MAP_ELEMS;
@@ -2410,7 +2410,7 @@ void R_DrawWorldList( void )
 
 	if( numTempElems )
 	{
-		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_INT, tempElems );
+		pglDrawRangeElementsEXT( GL_TRIANGLES, startv, endv - 1, numTempElems, GL_UNSIGNED_SHORT, tempElems );
 		r_stats.c_total_tris += (numTempElems / 3);
 		r_stats.num_flushes++;
 		numTempElems = 0;

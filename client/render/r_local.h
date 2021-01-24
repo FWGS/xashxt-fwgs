@@ -459,6 +459,7 @@ enum
 	R_FRAMEBUFFER_OBJECT,
 	R_PARANOIA_EXT,		// custom OpenGL32.dll with hacked function glDepthRange
 	R_DEBUG_OUTPUT,
+	R_VERTEX_HALF_FLOAT,	// mali400 does not seems to support it
 	R_EXTCOUNT,		// must be last
 };
 

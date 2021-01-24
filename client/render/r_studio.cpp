@@ -114,6 +114,7 @@ void CStudioModelRenderer :: Init( void )
 	m_pCvarCompatible		= CVAR_REGISTER( "r_studio_compatible", "1", FCVAR_ARCHIVE );
 	m_pCvarLodScale		= CVAR_REGISTER( "cl_lod_scale", "5.0", FCVAR_ARCHIVE );
 	m_pCvarLodBias		= CVAR_REGISTER( "cl_lod_bias", "0", FCVAR_ARCHIVE );
+	m_pCvarUInt		= CVAR_REGISTER( "cl_studio_unsigned_int", "1", FCVAR_ARCHIVE );
 
 	m_pChromeSprite		= IEngineStudio.GetChromeSprite();
 	m_chromeCount		= 0;
@@ -623,6 +624,27 @@ void CStudioModelRenderer :: ComputeSkinMatrix( mstudioboneweight_t *boneweights
 	}
 }
 
+static void HalfFloatVertexAttrib( void *array, uint size, void* offset, uint count )
+{
+	if( GL_Support( R_VERTEX_HALF_FLOAT ) )
+		pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, size, offset);
+	else // convert to short. This will break texture tiling
+	{
+		for( int i = 0; i < count; i++ )
+			for( int j = 0; j < 2; j++ )
+			{
+				short *el = (short*)((byte*)array + (size_t)offset + size * i + 2 * j);
+				float tc = HalfToFloat(*(unsigned short*)el);
+				//gEngfuncs.Con_Printf("tc %f\n", tc);
+				//tc = bound(-1.0f,tc,1.0f);
+				*el = tc * 32767.0f;
+			}
+
+		pglBufferDataARB( GL_ARRAY_BUFFER_ARB, count*size, array, GL_STATIC_DRAW_ARB );
+		pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_SHORT, GL_TRUE, size, offset );
+	}
+}
+
 void CStudioModelRenderer :: UploadBufferBase( vbomesh_t *pOut, svert_t *arrayxvert )
 {
 	static svert_v0_t	arraysvert[MAXARRAYVERTS];
@@ -646,7 +668,7 @@ void CStudioModelRenderer :: UploadBufferBase( vbomesh_t *pOut, svert_t *arrayxv
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, stcoord ));
+	HalfFloatVertexAttrib( arraysvert, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, stcoord ), m_nNumArrayVerts );
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v0_t ), (void *)offsetof( svert_v0_t, normal ));
@@ -679,7 +701,7 @@ void CStudioModelRenderer :: UploadBufferVLight( vbomesh_t *pOut, svert_t *array
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, stcoord ));
+	HalfFloatVertexAttrib( arraysvert, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, stcoord ), m_nNumArrayVerts );
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v1_t ), (void *)offsetof( svert_v1_t, normal ));
@@ -716,7 +738,7 @@ void CStudioModelRenderer :: UploadBufferWeight( vbomesh_t *pOut, svert_t *array
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, stcoord ));
+	HalfFloatVertexAttrib( arraysvert, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, stcoord ), m_nNumArrayVerts );
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v2_t ), (void *)offsetof( svert_v2_t, normal ));
@@ -762,7 +784,7 @@ void CStudioModelRenderer :: UploadBufferGeneric( vbomesh_t *pOut, svert_t *arra
 	pglVertexAttribPointerARB( ATTR_INDEX_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, vertex ));
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_POSITION );
 
-	pglVertexAttribPointerARB( ATTR_INDEX_TEXCOORD0, 2, GL_HALF_FLOAT_ARB, GL_FALSE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, stcoord ));
+	HalfFloatVertexAttrib( arraysvert, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, stcoord ), m_nNumArrayVerts );
 	pglEnableVertexAttribArrayARB( ATTR_INDEX_TEXCOORD0 );
 
 	pglVertexAttribPointerARB( ATTR_INDEX_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof( svert_v3_t ), (void *)offsetof( svert_v3_t, normal ));
@@ -824,35 +846,10 @@ void CStudioModelRenderer :: MeshCreateBuffer( vbomesh_t *pOut, const mstudiomes
 
 		for( ; i > 0; i--, ptricmds += 4 )
 		{
-			if( vertexState++ < 3 )
-			{
-				m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-			}
-			else if( strip )
-			{
-				// flip triangles between clockwise and counter clockwise
-				if( vertexState & 1 )
-				{
-					// draw triangle [n-2 n-1 n]
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 2;
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-				}
-				else
-				{
-					// draw triangle [n-1 n-2 n]
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 2;
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-				}
-			}
+			if( CVAR_TO_BOOL( m_pCvarUInt ) )
+				MeshMakeIndex( m_arrayelems_i, vertexState, strip );
 			else
-			{
-				// draw triangle fan [0 n-1 n]
-				m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - ( vertexState - 1 );
-				m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
-				m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-			}
+				MeshMakeIndex( m_arrayelems_s, vertexState, strip );
 
 			// don't concat by matrix here - it's should be done on GPU
 			arrayxvert[m_nNumArrayVerts].vertex = pstudioverts[ptricmds[0]];
@@ -953,7 +950,10 @@ void CStudioModelRenderer :: MeshCreateBuffer( vbomesh_t *pOut, const mstudiomes
 	// create index array buffer
 	pglGenBuffersARB( 1, &pOut->ibo );
 	pglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, pOut->ibo );
-	pglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, m_nNumArrayElems * sizeof( unsigned int ), &m_arrayelems[0], GL_STATIC_DRAW_ARB );
+	if( CVAR_TO_BOOL( m_pCvarUInt ) )
+		pglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, m_nNumArrayElems * sizeof( unsigned int ), &m_arrayelems_i[0], GL_STATIC_DRAW_ARB );
+	else
+		pglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, m_nNumArrayElems * sizeof( unsigned short ), &m_arrayelems_s[0], GL_STATIC_DRAW_ARB );
 
 	// don't forget to unbind them
 	pglBindVertexArray( GL_FALSE );
@@ -3969,9 +3969,18 @@ void CStudioModelRenderer :: DrawMeshFromBuffer( const vbomesh_t *mesh )
 	pglBindVertexArray( mesh->vao );
 	pglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, mesh->ibo );
 
-	if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
-		pglDrawRangeElementsEXT( GL_TRIANGLES, 0, mesh->numVerts - 1, mesh->numElems, GL_UNSIGNED_INT, 0 );
-	else pglDrawElements( GL_TRIANGLES, mesh->numElems, GL_UNSIGNED_INT, 0 );
+	if( CVAR_TO_BOOL( m_pCvarUInt ) )
+	{
+		if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
+			pglDrawRangeElementsEXT( GL_TRIANGLES, 0, mesh->numVerts - 1, mesh->numElems, GL_UNSIGNED_INT, 0 );
+		else pglDrawElements( GL_TRIANGLES, mesh->numElems, GL_UNSIGNED_INT, 0 );
+	}
+	else
+	{
+		if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
+			pglDrawRangeElementsEXT( GL_TRIANGLES, 0, mesh->numVerts - 1, mesh->numElems, GL_UNSIGNED_SHORT, 0 );
+		else pglDrawElements( GL_TRIANGLES, mesh->numElems, GL_UNSIGNED_SHORT, 0 );
+	}
 
 	r_stats.c_total_tris += (mesh->numElems / 3);
 	r_stats.num_flushes++;

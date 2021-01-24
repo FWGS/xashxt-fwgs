@@ -335,7 +335,7 @@ void CStudioModelRenderer :: ProjectDecalOntoMesh( DecalBuildInfo_t& build )
 	// into pose space. Also, we'll not be bothering with flexes.
 	for( int j = 0; j < build.m_pDecalMesh->numvertices; j++ )
 	{
-		DecalVertex_t *vert = &m_decalverts[m_arrayelems[build.m_pDecalMesh->firstvertex + j]];
+		DecalVertex_t *vert = &m_decalverts[CVAR_TO_BOOL( m_pCvarUInt )?m_arrayelems_i[build.m_pDecalMesh->firstvertex + j]:m_arrayelems_s[build.m_pDecalMesh->firstvertex + j]];
 
 		// No decal vertex yet...
 		pVertexInfo[j].m_VertexIndex = 0xFFFF;
@@ -380,7 +380,7 @@ int CStudioModelRenderer :: ComputeClipFlags( Vector2D const& uv )
 void CStudioModelRenderer :: ConvertMeshVertexToDecalVertex( DecalBuildInfo_t& build, int meshIndex, DecalVertex_t& decalVertex )
 {
 	// Copy over the data;
-	decalVertex = m_decalverts[m_arrayelems[build.m_pDecalMesh->firstvertex + meshIndex]];
+	decalVertex = m_decalverts[CVAR_TO_BOOL( m_pCvarUInt )?m_arrayelems_i[build.m_pDecalMesh->firstvertex + meshIndex]:m_arrayelems_s[build.m_pDecalMesh->firstvertex + meshIndex]];
 
 	// get the texture coords from the decal planar projection
 	decalVertex.m_TexCoord0 = build.m_pVertexInfo[meshIndex].m_UV;
@@ -788,36 +788,10 @@ void CStudioModelRenderer :: AddDecalToModel( DecalBuildInfo_t& buildInfo )
 
 			for( ; numVerts > 0; numVerts--, ptricmds += 4 )
 			{
-				// build in indices
-				if( vertexState++ < 3 )
-				{
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-				}
-				else if( tri_strip )
-				{
-					// flip triangles between clockwise and counter clockwise
-					if( vertexState & 1 )
-					{
-						// draw triangle [n-2 n-1 n]
-						m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 2;
-						m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
-						m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-					}
-					else
-					{
-						// draw triangle [n-1 n-2 n]
-						m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
-						m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 2;
-						m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-					}
-				}
+				if( CVAR_TO_BOOL( m_pCvarUInt ) )
+					MeshMakeIndex( m_arrayelems_i, vertexState, tri_strip );
 				else
-				{
-					// draw triangle fan [0 n-1 n]
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - ( vertexState - 1 );
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts - 1;
-					m_arrayelems[m_nNumArrayElems++] = m_nNumArrayVerts;
-				}
+					MeshMakeIndex( m_arrayelems_s, vertexState, tri_strip );
 
 				DecalVertex_t *out = &m_decalverts[m_nNumArrayVerts];
 
@@ -1243,7 +1217,10 @@ void CStudioModelRenderer :: DrawDecalMaterial( DecalMaterial_t& decalMaterial, 
 
 	for( int i = 0; i < indexCount; i++ )
 	{
-		m_arrayelems[m_nNumArrayElems] = decalMaterial.m_Indices[i] + vertexOffset; 
+		if( CVAR_TO_BOOL( m_pCvarUInt ) )
+			m_arrayelems_i[m_nNumArrayElems] = decalMaterial.m_Indices[i] + vertexOffset;
+		else
+			m_arrayelems_s[m_nNumArrayElems] = decalMaterial.m_Indices[i] + vertexOffset;
 		m_nNumArrayElems++;
 
 		if( --indicesRemaining <= 0 )
@@ -1256,9 +1233,18 @@ void CStudioModelRenderer :: DrawDecalMaterial( DecalMaterial_t& decalMaterial, 
 		}
 	}
 
-	if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
-		pglDrawRangeElementsEXT( GL_TRIANGLES, 0, m_nNumArrayVerts, m_nNumArrayElems, GL_UNSIGNED_INT, m_arrayelems );
-	else pglDrawElements( GL_TRIANGLES, m_nNumArrayElems, GL_UNSIGNED_INT, m_arrayelems );
+	if( CVAR_TO_BOOL( m_pCvarUInt ) )
+	{
+		if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
+			pglDrawRangeElementsEXT( GL_TRIANGLES, 0, m_nNumArrayVerts, m_nNumArrayElems, GL_UNSIGNED_SHORT, m_arrayelems_i );
+		else pglDrawElements( GL_TRIANGLES, m_nNumArrayElems, GL_UNSIGNED_SHORT, m_arrayelems_i );
+	}
+	else
+	{
+		if( GL_Support( R_DRAW_RANGEELEMENTS_EXT ))
+			pglDrawRangeElementsEXT( GL_TRIANGLES, 0, m_nNumArrayVerts, m_nNumArrayElems, GL_UNSIGNED_SHORT, m_arrayelems_s );
+		else pglDrawElements( GL_TRIANGLES, m_nNumArrayElems, GL_UNSIGNED_SHORT, m_arrayelems_s );
+	}
 
 	r_stats.c_total_tris += (m_nNumArrayElems / 3);
 	r_stats.num_flushes++;
