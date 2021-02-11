@@ -971,6 +971,10 @@ void CBaseEntity :: SetParent( int m_iNewParent, int m_iAttachment )
 
 	CheckForMultipleParents( this, pParent );
 }
+void CBaseEntity :: SetParent( const CBaseEntity *pParent, int m_iAttachment )
+{
+	SetParent((CBaseEntity *)pParent, m_iAttachment);
+}
 
 //=======================================================================
 //		set parent main function

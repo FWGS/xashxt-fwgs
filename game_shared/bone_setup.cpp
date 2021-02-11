@@ -312,7 +312,7 @@ mstudioanim_t *CStudioBoneSetup :: GetAnimSourceData( mstudioseqdesc_t *pseqdesc
 	mstudioseqgroup_t *pseqgroup = (mstudioseqgroup_t *)((byte *)m_pStudioHeader + m_pStudioHeader->seqgroupindex) + pseqdesc->seqgroup;
 
 	if( pseqdesc->seqgroup == 0 )
-		return (mstudioanim_t *)((byte *)m_pStudioHeader + pseqgroup->data + pseqdesc->animindex);
+		return (mstudioanim_t *)((byte *)m_pStudioHeader + pseqdesc->animindex);
 
 	return NULL; // base implementation can't lookup for sequence groups
 }

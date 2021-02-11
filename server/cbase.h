@@ -309,6 +309,7 @@ public:
 	// are relative to the attachment on this entity.
 	void		SetParent( const CBaseEntity* pNewParent, int iAttachment = 0 );
 	void		SetParent ( int m_iNewParent, int m_iAttachment = 0 );
+	void		SetParent ( long m_iNewParent ){SetParent((const CBaseEntity*)(void*)0);}
 	void		SetParent ( CBaseEntity* pParent, int m_iAttachment = 0 );
 	BOOL		HasAttachment( void );
 

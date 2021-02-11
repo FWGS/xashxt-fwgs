@@ -1257,7 +1257,7 @@ void *CPhysicNovodex :: CreateVehicle( CBaseEntity *pObject, string_t scriptName
 	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *)((byte *)phdr + phdr->seqindex);
 	mstudioseqgroup_t *pseqgroup = (mstudioseqgroup_t *)((byte *)phdr + phdr->seqgroupindex) + pseqdesc->seqgroup;
 	mstudioattachment_t	*pattachment = (mstudioattachment_t *) ((byte *)phdr + phdr->attachmentindex);
-	mstudioanim_t *panim = (mstudioanim_t *)((byte *)phdr + pseqgroup->data + pseqdesc->animindex);
+	mstudioanim_t *panim = (mstudioanim_t *)((byte *)phdr + pseqdesc->animindex);
 	mstudiobone_t *pbone = (mstudiobone_t *)((byte *)phdr + phdr->boneindex);
 	static Vector pos[MAXSTUDIOBONES];
 	static Vector4D q[MAXSTUDIOBONES];
