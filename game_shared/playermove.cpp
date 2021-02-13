@@ -3382,7 +3382,7 @@ int PM_GetPhysEntInfo( int ent )
 
 void PM_Init( struct playermove_s *ppmove )
 {
-	assert( !pm_shared_initialized );
+//	assert( !pm_shared_initialized );
 
 	pmove = ppmove;
 

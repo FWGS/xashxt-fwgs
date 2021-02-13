@@ -555,7 +555,7 @@ void CSave :: WritePositionVector( const char *pname, const float *value, int co
 	}
 }
 
-void CSave :: WriteFunction( DATAMAP *pRootMap, const char *pname, const int *data, int count )
+void CSave :: WriteFunction( DATAMAP *pRootMap, const char *pname, void **data, int count )
 {
 	const char *functionName = UTIL_FunctionToName( pRootMap, (void *)(*data) );
 
@@ -755,7 +755,7 @@ int CSave :: WriteFields( const char *pname, const void *pBaseData, DATAMAP *pMa
 			WriteInt( pTest->fieldName, (int *)(char *)pOutputData, pTest->fieldSize );
 			break;
 		case FIELD_FUNCTION:
-			WriteFunction( pMap, pTest->fieldName, (int *)(char *)pOutputData, pTest->fieldSize );
+			WriteFunction( pMap, pTest->fieldName, (void **)pOutputData, pTest->fieldSize );
 			break;
 		default:
 			ALERT( at_error, "Bad field type\n" );
