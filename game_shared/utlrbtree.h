@@ -585,16 +585,18 @@ inline void  CUtlRBTree<T, I, L, M>::SetRightChild( I i, I child  )
 //-----------------------------------------------------------------------------
 // Gets at the links
 //-----------------------------------------------------------------------------
+// Sentinel node, makes life easier
+static const int s_Sentinel[4] = {-1, -1, -1, 1};
+// MUST be compatible with this:
+//	static Links_t s_Sentinel = 
+//	{ 
+//		InvalidIndex(), InvalidIndex(), InvalidIndex(), CUtlRBTree<T, I, L, M>::BLACK 
+//	};
+// but does not create UNIQUE symbols with bfd ld
 
 template < class T, class I, typename L, class M >
 inline typename CUtlRBTree<T, I, L, M>::Links_t const &CUtlRBTree<T, I, L, M>::Links( I i ) const 
 {
-	// Sentinel node, makes life easier
-	static Links_t s_Sentinel = 
-	{ 
-		InvalidIndex(), InvalidIndex(), InvalidIndex(), CUtlRBTree<T, I, L, M>::BLACK 
-	};
-
 	return (i != InvalidIndex()) ? *(Links_t*)&m_Elements[i] : *(Links_t*)&s_Sentinel;
 }
 
