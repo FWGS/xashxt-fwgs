@@ -1,3 +1,4 @@
+#include "../public/build.h"
 #ifndef __MSC_VER
 #define _forceinline inline __attribute__((always_inline))
 #define __cdecl

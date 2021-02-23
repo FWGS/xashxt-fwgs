@@ -22,6 +22,7 @@
 #include  "virtualfs.h"
 #include	"monsters.h"
 #include	"nodes.h"
+#include	"nodes_compat.h"
 #include	"animation.h"
 #include	"doors.h"
 
@@ -512,7 +513,7 @@ int CGraph::NextNodeInRoute( int iCurrentNode, int iDest, int iHull, int iCap )
 {
 	int iNext = iCurrentNode;
 	int nCount = iDest+1;
-	char *pRoute = m_pRouteInfo + m_pNodes[ iCurrentNode ].m_pNextBestNode[iHull][iCap];
+	signed char *pRoute = m_pRouteInfo + m_pNodes[ iCurrentNode ].m_pNextBestNode[iHull][iCap];
 
 	// Until we decode the next best node
 	//
@@ -2315,146 +2316,176 @@ int CGraph :: FLoadGraph ( char *szMapName )
 	pMemFile = aMemFile;
 
 	if( !aMemFile )
-	{
-		// nodegraph is completely missed
 		return FALSE;
-	}
-	else
+
+	// Read the graph version number
+	//
+	length -= sizeof(int);
+	if( length < 0 )
+		goto ShortFile;
+	iVersion = *(int *) pMemFile;
+	pMemFile += sizeof(int);
+
+	if( iVersion == GRAPH_VERSION || iVersion == GRAPH_VERSION_RETAIL )
 	{
-		// Read the graph version number
-		//
-		length -= sizeof(int);
-		if (length < 0) goto ShortFile;
-		memcpy(&iVersion, pMemFile, sizeof(int));
-		pMemFile += sizeof(int);
-
-		if ( iVersion != GRAPH_VERSION )
-		{
-			// This file was written by a different build of the dll!
-			//
-			ALERT ( at_aiconsole, "**ERROR** Graph version is %d, expected %d\n",iVersion, GRAPH_VERSION );
-			goto ShortFile;
-		}
-
 		// Read the graph class
 		//
-		length -= sizeof(CGraph);
-		if (length < 0) goto ShortFile;
-		memcpy(this, pMemFile, sizeof(CGraph));
-		pMemFile += sizeof(CGraph);
+		if ( iVersion == GRAPH_VERSION )
+		{
+			length -= sizeof(CGraph);
+			if( length < 0 )
+				goto ShortFile;
+			memcpy( this, pMemFile, sizeof(CGraph) );
+			pMemFile += sizeof(CGraph);
 
-		// Set the pointers to zero, just in case we run out of memory.
-		//
-		m_pNodes     = NULL;
-		m_pLinkPool  = NULL;
-		m_di         = NULL;
-		m_pRouteInfo = NULL;
-		m_pHashLinks = NULL;
-
+			// Set the pointers to zero, just in case we run out of memory.
+			//
+			m_pNodes = NULL;
+			m_pLinkPool = NULL;
+			m_di = NULL;
+			m_pRouteInfo = NULL;
+			m_pHashLinks = NULL;
+		}
+#if _GRAPH_VERSION != _GRAPH_VERSION_RETAIL
+		else
+		{
+			ALERT( at_aiconsole, "Loading CGraph in GRAPH_VERSION 16 compatibility mode\n" );
+			length -= sizeof(CGraph_Retail);
+			if( length < 0 )
+				goto ShortFile;
+			reinterpret_cast<CGraph_Retail*>(pMemFile) -> copyOverTo(this);
+			pMemFile += sizeof(CGraph_Retail);
+		}
+#endif
 
 		// Malloc for the nodes
 		//
-		m_pNodes = ( CNode * )calloc ( sizeof ( CNode ), m_cNodes );
+		m_pNodes = (CNode *)calloc( sizeof(CNode), m_cNodes );
 
-		if ( !m_pNodes )
+		if( !m_pNodes )
 		{
-			ALERT ( at_aiconsole, "**ERROR**\nCouldn't malloc %d nodes!\n", m_cNodes );
+			ALERT( at_aiconsole, "**ERROR**\nCouldn't malloc %d nodes!\n", m_cNodes );
 			goto NoMemory;
 		}
 
 		// Read in all the nodes
 		//
 		length -= sizeof(CNode) * m_cNodes;
-		if (length < 0) goto ShortFile;
-		memcpy(m_pNodes, pMemFile, sizeof(CNode)*m_cNodes);
+		if( length < 0 )
+			goto ShortFile;
+		memcpy( m_pNodes, pMemFile, sizeof(CNode) * m_cNodes );
 		pMemFile += sizeof(CNode) * m_cNodes;
 
-		
 		// Malloc for the link pool
 		//
-		m_pLinkPool = ( CLink * )calloc ( sizeof ( CLink ), m_cLinks );
+		m_pLinkPool = (CLink *)calloc( sizeof(CLink), m_cLinks );
 
-		if ( !m_pLinkPool )
+		if( !m_pLinkPool )
 		{
-			ALERT ( at_aiconsole, "**ERROR**\nCouldn't malloc %d link!\n", m_cLinks );
+			ALERT( at_aiconsole, "**ERROR**\nCouldn't malloc %d link!\n", m_cLinks );
 			goto NoMemory;
 		}
 
 		// Read in all the links
 		//
-		length -= sizeof(CLink)*m_cLinks;
-		if (length < 0) goto ShortFile;
-		memcpy(m_pLinkPool, pMemFile, sizeof(CLink)*m_cLinks);
-		pMemFile += sizeof(CLink)*m_cLinks;
+		if( iVersion == GRAPH_VERSION )
+		{
+			length -= sizeof(CLink) * m_cLinks;
+			if( length < 0 )
+				goto ShortFile;
+			memcpy( m_pLinkPool, pMemFile, sizeof(CLink) * m_cLinks );
+			pMemFile += sizeof(CLink) * m_cLinks;
+		}
+#if _GRAPH_VERSION != _GRAPH_VERSION_RETAIL
+		else
+		{
+			ALERT( at_aiconsole, "Loading CLink array in GRAPH_VERSION 16 compatibility mode\n" );
+			length -= sizeof(CLink_Retail) * m_cLinks;
+			if( length < 0 )
+				goto ShortFile;
+			reinterpret_cast<CLink_Retail*>(pMemFile) -> copyOverTo(m_pLinkPool);
+			pMemFile += sizeof(CLink_Retail) * m_cLinks;
+		}
+#endif
 
 		// Malloc for the sorting info.
 		//
 		m_di = (DIST_INFO *)calloc( sizeof(DIST_INFO), m_cNodes );
-		if ( !m_di )
+		if( !m_di )
 		{
-			ALERT ( at_aiconsole, "***ERROR**\nCouldn't malloc %d entries sorting nodes!\n", m_cNodes );
+			ALERT( at_aiconsole, "***ERROR**\nCouldn't malloc %d entries sorting nodes!\n", m_cNodes );
 			goto NoMemory;
 		}
 
 		// Read it in.
 		//
-		length -= sizeof(DIST_INFO)*m_cNodes;
-		if (length < 0) goto ShortFile;
-		memcpy(m_di, pMemFile, sizeof(DIST_INFO)*m_cNodes);
-		pMemFile += sizeof(DIST_INFO)*m_cNodes;
+		length -= sizeof(DIST_INFO) * m_cNodes;
+		if( length < 0 )
+			goto ShortFile;
+		memcpy( m_di, pMemFile, sizeof(DIST_INFO) * m_cNodes );
+		pMemFile += sizeof(DIST_INFO) * m_cNodes;
 
 		// Malloc for the routing info.
 		//
 		m_fRoutingComplete = FALSE;
-		m_pRouteInfo = (char *)calloc( sizeof(char), m_nRouteInfo );
-		if ( !m_pRouteInfo )
+		m_pRouteInfo = (signed char *)calloc( sizeof(signed char), m_nRouteInfo );
+		if( !m_pRouteInfo )
 		{
-			ALERT ( at_aiconsole, "***ERROR**\nCounldn't malloc %d route bytes!\n", m_nRouteInfo );
+			ALERT( at_aiconsole, "***ERROR**\nCouldn't malloc %d route bytes!\n", m_nRouteInfo );
 			goto NoMemory;
 		}
 		m_CheckedCounter = 0;
-		for (int i = 0; i < m_cNodes; i++)
+		for(int i = 0; i < m_cNodes; i++ )
 		{
 			m_di[i].m_CheckedEvent = 0;
 		}
-		
+
 		// Read in the route information.
 		//
-		length -= sizeof(char)*m_nRouteInfo;
-		if (length < 0) goto ShortFile;
-		memcpy(m_pRouteInfo, pMemFile, sizeof(char)*m_nRouteInfo);
-		pMemFile += sizeof(char)*m_nRouteInfo;
-		m_fRoutingComplete = TRUE;;
+		length -= sizeof(char) * m_nRouteInfo;
+		if( length < 0 )
+			goto ShortFile;
+		memcpy( m_pRouteInfo, pMemFile, sizeof(char) * m_nRouteInfo );
+		pMemFile += sizeof(char) * m_nRouteInfo;
+		m_fRoutingComplete = TRUE;
 
 		// malloc for the hash links
 		//
-		m_pHashLinks = (short *)calloc(sizeof(short), m_nHashLinks);
-		if (!m_pHashLinks)
+		m_pHashLinks = (short *)calloc( sizeof(short), m_nHashLinks );
+		if( !m_pHashLinks )
 		{
-			ALERT ( at_aiconsole, "***ERROR**\nCounldn't malloc %d hash link bytes!\n", m_nHashLinks );
+			ALERT( at_aiconsole, "***ERROR**\nCouldn't malloc %d hash link bytes!\n", m_nHashLinks );
 			goto NoMemory;
 		}
 
 		// Read in the hash link information
 		//
-		length -= sizeof(short)*m_nHashLinks;
-		if (length < 0) goto ShortFile;
-		memcpy(m_pHashLinks, pMemFile, sizeof(short)*m_nHashLinks);
-		pMemFile += sizeof(short)*m_nHashLinks;
+		length -= sizeof(short) * m_nHashLinks;
+		if( length < 0 )
+			goto ShortFile;
+		memcpy( m_pHashLinks, pMemFile, sizeof(short) * m_nHashLinks );
+		// pMemFile += sizeof(short) * m_nHashLinks;
 
 		// Set the graph present flag, clear the pointers set flag
 		//
 		m_fGraphPresent = TRUE;
 		m_fGraphPointersSet = FALSE;
-		
-		FREE_FILE(aMemFile);
 
-		if (length != 0)
+		FREE_FILE( aMemFile );
+
+		if( length != 0 )
 		{
-			ALERT ( at_aiconsole, "***WARNING***:Node graph was longer than expected by %d bytes.!\n", length);
+			ALERT( at_aiconsole, "***WARNING***:Node graph was longer than expected by %d bytes.!\n", length );
 		}
 
 		return TRUE;
+	}
+	else
+	{
+		// This file was written by a different build of the dll!
+		//
+		ALERT( at_aiconsole, "**ERROR** Graph version is %d, expected %d\n", iVersion, GRAPH_VERSION );
+		goto ShortFile;
 	}
 
 ShortFile:
@@ -3274,7 +3305,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 						}
 						else
 						{
-							char *Tmp = (char *)calloc(sizeof(char), (m_nRouteInfo + nRoute));
+							signed char *Tmp = (signed char *)calloc(sizeof(char), (m_nRouteInfo + nRoute));
 							memcpy(Tmp, m_pRouteInfo, m_nRouteInfo);
 							free(m_pRouteInfo);
 							m_pRouteInfo = Tmp;
@@ -3287,7 +3318,7 @@ void CGraph :: ComputeStaticRoutingTables( void )
 					else
 					{
 						m_nRouteInfo = nRoute;
-						m_pRouteInfo = (char *)calloc(sizeof(char), nRoute);
+						m_pRouteInfo = (signed char *)calloc(sizeof(signed char), nRoute);
 						memcpy(m_pRouteInfo, pRoute, nRoute);
 						m_pNodes[ iFrom ].m_pNextBestNode[iHull][iCap] = 0;
 						nTotalCompressedSize += CompressedSize;

@@ -103,10 +103,20 @@ typedef struct
 	short n;		// Nearest node or -1 if no node found.
 } CACHE_ENTRY;
 
+
 //=========================================================
 // CGraph 
 //=========================================================
-#define	GRAPH_VERSION	(int)16// !!!increment this whever graph/node/link classes change, to obsolesce older disk files.
+#define _GRAPH_VERSION_RETAIL 16 // Retail Half-Life graph version. Don't increment this
+#ifdef XASH_64BIT
+#define	_GRAPH_VERSION	(16 * 10)
+#else
+#define	_GRAPH_VERSION	(16) // !!!increment this whenever graph/node/link classes change, to obsolesce older disk files.
+#endif
+#define GRAPH_VERSION (int)_GRAPH_VERSION
+#define GRAPH_VERSION_RETAIL (int)_GRAPH_VERSION_RETAIL
+
+
 class CGraph
 {
 public:
@@ -118,7 +128,7 @@ public:
 
 	CNode	*m_pNodes;// pointer to the memory block that contains all node info
 	CLink	*m_pLinkPool;// big list of all node connections
-	char    *m_pRouteInfo; // compressed routing information the nodes use.
+	signed char    *m_pRouteInfo; // compressed routing information the nodes use.
 
 	int		m_cNodes;// total number of nodes
 	int		m_cLinks;// total number of links
